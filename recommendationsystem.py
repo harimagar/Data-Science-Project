@@ -161,3 +161,56 @@ df_rfm = df_rfm.groupby('user_id').ffill()
 df_rfm['user_id'] = user_ids
 df_rfm = df_rfm.rename(columns={"order_id":"F_last_monthly_purchases_count"})
 df_rfm.head(20)
+
+# Monetary
+# user last monthly purchase value
+df_user_month_purchases = df_data.groupby(['month_key','user_id'])['price'].sum().reset_index()
+df_rfm=df_rfm.merge(df_user_month_purchases, how='left', on=['month_key','user_id'])
+
+# fill in  last purchase month
+user_ids = df_rfm[['user_id']]
+df_rfm = df_rfm.groupby('user_id').ffill()
+df_rfm['user_id'] = user_ids
+df_rfm = df_rfm.rename(columns={"price":"M_last_monthly_purchases_value"})
+df_rfm.head(20)
+
+# define RFM dataframe
+# drop all missing values
+df_rfm = df_rfm.dropna()
+df_rfm = df_rfm[['user_id','month_key','R_months_since_last_purchase','F_last_monthly_purchases_count', 'M_last_monthly_purchases_value']]
+df_rfm
+
+# visualizing PCA - Prinicpal Component Analysis
+from sklearn.decomposition import PCA
+X = df_rfm[['R_months_since_last_purchase','F_last_monthly_purchases_count','M_last_monthly_purchases_value']]
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+df_pca = pd.DataFrame(X_pca, columns=['pca_1','pca_2'])
+df_pca
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.scatter(df_pca['pca_1'], df_pca['pca_2'])
+plt.show()
+
+# K means clustering
+from sklearn.cluster import KMeans
+inertias = []
+for i in range(1,11):
+  kmeans = KMeans(n_clusters=i)
+  kmeans.fit(X)
+  inertias.append(kmeans.inertia_)
+plt.plot(range(1,11), inertias, marker='o')
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.show()
+
+kmeans = KMeans(n_clusters=4)
+kmeans.fit(df_pca)
+plt.scatter(df_pca['pca_1'], df_pca['pca_2'], c=kmeans.labels_)
+plt.show()
+
+# Analyze results of clustering
+df_rfm['kmeans_labels'] = kmeans.labels_
+df_rfm.groupby('kmeans_labels')[['R_months_since_last_purchase','F_last_monthly_purchases_count','M_last_monthly_purchases_value']].agg({"mean","count"})
