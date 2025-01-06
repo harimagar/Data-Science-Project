@@ -654,6 +654,15 @@ print("Unique users IDs:", df['user_id'].unique())
 pred = collab_model.predict(uid=1515915625441990000, iid=1515966223509089906)
 print(f"Collaborative Filtering Prediction: {pred.est}")
 
+testset = [tuple(x) for x in test_data[['user_id', 'product_id', 'price']].to_numpy()]
+
+# Generate predictions for the testset
+predictions = collab_model.test(testset)
+true_ratings = [pred.r_ui for pred in predictions]  # True ratings
+predicted_ratings = [pred.est for pred in predictions]  # Predicted ratings
+rmse = np.sqrt(mean_squared_error(true_ratings, predicted_ratings))
+print(f"RMSE: {rmse}")
+
 # Content-Based Filtering
 # Combine category_code and brand for content-based features
 df['content'] = df['category_code'].fillna('') + " " + df['brand'].fillna('')
@@ -696,6 +705,49 @@ def ann_recommendations(product_id, top_n=5):
 
 # Test ANN recommendations
 print("ANN Content-Based Recommendations:", ann_recommendations(product_id=1515966223509089906))
+
+# RMSE Calculation for Content-Based Filtering
+def predict_rating(user_id, product_id, tfidf_matrix, df):
+    if product_id not in df['product_id'].values:
+        return np.nan  # No prediction available
+    indices = df.index[df['product_id'] == product_id].tolist()
+    if not indices:
+        return np.nan
+    idx = indices[0]
+    product_vector = tfidf_matrix[idx]
+    sim_scores = linear_kernel(product_vector, tfidf_matrix).flatten()
+
+    # User's rated products
+    user_ratings = df[df['user_id'] == user_id]
+    if user_ratings.empty:
+        return np.nan  # No prediction available
+
+    # Calculate weighted average rating
+    weighted_sum = 0
+    sim_sum = 0
+    for _, row in user_ratings.iterrows():
+        rated_product_idx = df.index[df['product_id'] == row['product_id']].tolist()
+        if rated_product_idx:
+            similarity = sim_scores[rated_product_idx[0]]
+            weighted_sum += similarity * row['price']
+            sim_sum += similarity
+
+    return weighted_sum / sim_sum if sim_sum > 0 else np.nan
+
+# Apply predictions for each user-product pair in the dataset
+df['predicted_rating'] = df.apply(
+    lambda x: predict_rating(x['user_id'], x['product_id'], tfidf_matrix, df), axis=1
+)
+
+# Drop rows with NaN predictions
+df_filtered = df.dropna(subset=['predicted_rating'])
+
+# Calculate RMSE
+true_ratings = df_filtered['price'].to_numpy()
+predicted_ratings = df_filtered['predicted_rating'].to_numpy()
+rmse = np.sqrt(mean_squared_error(true_ratings, predicted_ratings))
+
+print(f"RMSE for Content-Based Filtering: {rmse}")
 
 # Hybrid Recommendation
 # Weighted average of collaborative and content-based recommendations
