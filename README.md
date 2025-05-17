@@ -82,8 +82,7 @@ The report includes research background, methodology, machine learning implement
 - Passionate about recommendation systems, applied machine learning, and solving real-world problems with data.
 
 📧 magarharee54@gmail.com  
-🔗 [LinkedIn](www.linkedin.com/in/hari-gharti-magar)
-
+🔗 [LinkedIn](https://www.linkedin.com/in/hari-gharti-magar?trk=contact-info)
 💻 [GitHub](https://github.com/harimagar/Data-Science-Project)
 
 ---
