@@ -1,4 +1,4 @@
-# 🛒 Personalized Recommendation System for E-Commerce using Machine Learning
+# 🛒 Building and Optimizing a Personalized Recommendation System for E-Commerce using Machine Learning
 
 Hi! I'm Hari Gharti Magar, an MSc Data Science with Advanced Research student at the University of Hertfordshire, UK. This project was developed as part of my final dissertation, focusing on "Building and Optimizing a Personalized Recommendation System for E-Commerce Using Machine Learning".
 
